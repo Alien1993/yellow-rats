@@ -80,20 +80,35 @@ static void display(cv::Mat& im, std::vector<Barcode>& codes)
     }
 
     // Display results
-    cv::imshow("Results", im);
+    cv::imshow("Main", im);
 }
 
 int main(int argc, char** argv)
 {
+    int constrast = 100;
+    int brightness = 50;
+
+    cv::namedWindow("Main");
+    cv::createTrackbar("constrast", "Main", &constrast, 300, 0);
+    cv::createTrackbar("brightness", "Main", &brightness, 100, 0);
     cv::VideoCapture cam;
     // Gets the first cam it finds
     cam.open(0, cv::CAP_ANY);
     cv::Mat image;
     while (cam.isOpened()) {
         cam.read(image);
-        auto codes = findBarCodes(image);
 
-        display(image, codes);
+        cv::Mat new_image = cv::Mat::zeros(image.size(), image.type());
+        for (int y = 0; y < image.rows; y++) {
+            for (int x = 0; x < image.cols; x++) {
+                for (int c = 0; c < image.channels(); c++) {
+                    new_image.at<cv::Vec3b>(y, x)[c] = cv::saturate_cast<uchar>((constrast / 100.0) * image.at<cv::Vec3b>(y, x)[c] + brightness);
+                }
+            }
+        }
+
+        auto codes = findBarCodes(new_image);
+        display(new_image, codes);
 
         if (cv::waitKey(5) > 0) {
             break;
