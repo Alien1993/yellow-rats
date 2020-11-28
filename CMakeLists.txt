@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.19)
 
-project( yellow-rats )
+project(yellow-rats)
 
-find_package( OpenCV REQUIRED )
-include_directories( ${OpenCV_INCLUDE_DIRS} )
+find_package(OpenCV 4 REQUIRED)
+include(FindPkgConfig)
+pkg_search_module(ZBAR REQUIRED zbar>=0.23)
 
-add_executable( ${PROJECT_NAME} "main.cpp" )
+add_executable(${PROJECT_NAME} "main.cpp")
 
-target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${ZBAR_LIBRARIES})
