@@ -7,6 +7,8 @@
 #include <zbar/Image.h>
 #include <zbar/Symbol.h>
 
+#include "comic.h"
+
 struct Barcode {
     std::string type;
     std::string data;
@@ -89,18 +91,75 @@ int main(int argc, char** argv)
         auto codes = findBarCodes(scanner, subImage);
 
         // Draws area where barcodes are expected to be
-        cv::rectangle(image, scanningArea, cv::Scalar(0, 255, 0), 3);
+        cv::rectangle(image, scanningArea, cv::Scalar(255, 0, 255), 3);
 
         // There should be only one barcode really
         if (codes.size() > 0) {
             lastScanned = codes.at(0).data;
         }
-        // Displays last barcode found
-        cv::putText(image, lastScanned, cv::Point(100, image.rows - 100), cv::FONT_HERSHEY_PLAIN, 20, cv::Scalar(0, 255, 0), 5);
+
+        if (!lastScanned.empty()) {
+            // Displays last barcode found
+            cv::putText(image, lastScanned, cv::Point(100, image.rows - 100), cv::FONT_HERSHEY_PLAIN, 20, cv::Scalar(0, 0, 255), 5);
+
+            cv::imshow("Main", image);
+
+            // We're scanning EAN-5 but we don't need the first digit since only the last four are used to store the comic number
+            unsigned int number = std::atoi(lastScanned.substr(1).data());
+
+            auto quality = Comic::NONE;
+            // Waits for number to be pressed to set quality
+            switch (cv::waitKey()) {
+            case 49:
+            case 177:
+                // 1 / Mint
+                quality = Comic::MINT;
+                break;
+            case 50:
+            case 178:
+                // 2 / Near Mint
+                quality = Comic::NEAR_MINT;
+                break;
+            case 51:
+            case 179:
+                // 3 / Very Fine
+                quality = Comic::VERY_FINE;
+                break;
+            case 52:
+            case 180:
+                // 4 / Fine
+                quality = Comic::FINE;
+                break;
+            case 53:
+            case 181:
+                // 5 / Very Good
+                quality = Comic::VERY_GOOD;
+                break;
+            case 54:
+            case 182:
+                // 6 / Good
+                quality = Comic::GOOD;
+                break;
+            case 55:
+            case 183:
+                // 7 / Fair
+                quality = Comic::FAIR;
+                break;
+            case 56:
+            case 184:
+                // 8 / Poor
+                quality = Comic::POOR;
+                break;
+            default:
+                break;
+            }
+            Comic c { number, quality };
+            lastScanned = "";
+        }
 
         cv::imshow("Main", image);
 
-        if (cv::waitKey(5) > 0) {
+        if (cv::waitKey(1) > 0) {
             break;
         }
     }
