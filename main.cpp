@@ -53,33 +53,6 @@ static std::vector<Barcode> findBarCodes(zbar::ImageScanner& scanner, cv::Mat& i
     return objects;
 }
 
-// Display barcode and QR code location
-static void display(cv::Mat& im, std::vector<Barcode>& codes)
-{
-    // Loop over all decoded objects
-    for (auto code : codes) {
-        std::vector<cv::Point> points = code.location;
-        std::vector<cv::Point> hull;
-
-        // If the points do not form a quad, find convex hull
-        if (points.size() > 4) {
-            cv::convexHull(points, hull);
-        } else {
-            hull = points;
-        }
-
-        // Number of points in the convex hull
-        int n = hull.size();
-
-        for (int j = 0; j < n; j++) {
-            cv::line(im, hull[j], hull[(j + 1) % n], cv::Scalar(255, 0, 0), 3);
-        }
-    }
-
-    // Display results
-    cv::imshow("Main", im);
-}
-
 static int setScannerSettings(zbar::ImageScanner& scanner)
 {
     return scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 0) + scanner.set_config(zbar::ZBAR_EAN5, zbar::ZBAR_CFG_ENABLE, 1);
@@ -99,10 +72,33 @@ int main(int argc, char** argv)
     // Gets the first cam it finds
     cam.open(0, cv::CAP_ANY);
     cv::Mat image;
+    cv::Rect2d scanningArea;
+    std::string lastScanned;
     while (cam.isOpened()) {
         cam.read(image);
-        auto codes = findBarCodes(scanner, image);
-        display(image, codes);
+
+        // Opens a window to select area to scan for barcodes
+        if (scanningArea.empty()) {
+            auto boundWindowName = "Bounding Box Selection";
+            scanningArea = cv::selectROI(boundWindowName, image);
+            cv::destroyWindow(boundWindowName);
+        }
+
+        // Gets a submatrix and searches for barcodes in that area
+        auto subImage = image(scanningArea);
+        auto codes = findBarCodes(scanner, subImage);
+
+        // Draws area where barcodes are expected to be
+        cv::rectangle(image, scanningArea, cv::Scalar(0, 255, 0), 3);
+
+        // There should be only one barcode really
+        if (codes.size() > 0) {
+            lastScanned = codes.at(0).data;
+        }
+        // Displays last barcode found
+        cv::putText(image, lastScanned, cv::Point(100, image.rows - 100), cv::FONT_HERSHEY_PLAIN, 20, cv::Scalar(0, 255, 0), 5);
+
+        cv::imshow("Main", image);
 
         if (cv::waitKey(5) > 0) {
             break;
