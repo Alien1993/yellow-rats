@@ -13,32 +13,26 @@ struct Barcode {
     std::vector<cv::Point> location;
 };
 
-// Find and decode barcodes and QR codes
-static std::vector<Barcode> findBarCodes(cv::Mat& im)
+// Uses a configured scanner to search for barcodes in im
+static std::vector<Barcode> findBarCodes(zbar::ImageScanner& scanner, cv::Mat& image)
 {
-    // Create zbar scanner
-    zbar::ImageScanner scanner;
-
-    // Configure scanner
-    scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
-
     // Convert to grayscale
-    cv::Mat imGray;
-    cvtColor(im, imGray, cv::COLOR_BGR2GRAY);
+    cv::Mat imageGray;
+    cv::cvtColor(image, imageGray, cv::COLOR_BGR2GRAY);
 
     // Wrap image data in a zbar image
-    zbar::Image image(im.cols, im.rows, "Y800", static_cast<uchar*>(imGray.data), im.cols * im.rows);
+    zbar::Image zImage(image.cols, image.rows, "Y800", static_cast<uchar*>(imageGray.data), image.cols * image.rows);
 
     // Scan the image for barcodes and QRCodes
-    int n = scanner.scan(image);
+    int n = scanner.scan(zImage);
     if (n == 0) {
         return {};
     }
 
     std::vector<Barcode> objects;
     // Gather results
-    auto it = image.symbol_begin();
-    while (it != image.symbol_end()) {
+    auto it = zImage.symbol_begin();
+    while (it != zImage.symbol_end()) {
         Barcode obj;
 
         obj.type = it->get_type_name();
@@ -50,6 +44,10 @@ static std::vector<Barcode> findBarCodes(cv::Mat& im)
         }
 
         objects.push_back(obj);
+        std::cout << "====== START ======\n";
+        std::cout << "Data: " << it->get_data() << '\n';
+        std::cout << "Type: " << it->get_type_name() << '\n';
+        std::cout << "======= END =======\n";
         ++it;
     }
     return objects;
@@ -76,39 +74,35 @@ static void display(cv::Mat& im, std::vector<Barcode>& codes)
         for (int j = 0; j < n; j++) {
             cv::line(im, hull[j], hull[(j + 1) % n], cv::Scalar(255, 0, 0), 3);
         }
-        std::cout << code.data << std::endl;
     }
 
     // Display results
     cv::imshow("Main", im);
 }
 
+static int setScannerSettings(zbar::ImageScanner& scanner)
+{
+    return scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 0) + scanner.set_config(zbar::ZBAR_EAN5, zbar::ZBAR_CFG_ENABLE, 1);
+}
+
 int main(int argc, char** argv)
 {
-    int constrast = 100;
-    int brightness = 50;
+    zbar::ImageScanner scanner;
+    if (setScannerSettings(scanner) != 0) {
+        std::cerr << "Error setting ImageScanner config\n";
+        return 1;
+    }
 
     cv::namedWindow("Main");
-    cv::createTrackbar("constrast", "Main", &constrast, 300, 0);
-    cv::createTrackbar("brightness", "Main", &brightness, 100, 0);
     cv::VideoCapture cam;
+
     // Gets the first cam it finds
     cam.open(0, cv::CAP_ANY);
     cv::Mat image;
     while (cam.isOpened()) {
         cam.read(image);
-
-        cv::Mat new_image = cv::Mat::zeros(image.size(), image.type());
-        for (int y = 0; y < image.rows; y++) {
-            for (int x = 0; x < image.cols; x++) {
-                for (int c = 0; c < image.channels(); c++) {
-                    new_image.at<cv::Vec3b>(y, x)[c] = cv::saturate_cast<uchar>((constrast / 100.0) * image.at<cv::Vec3b>(y, x)[c] + brightness);
-                }
-            }
-        }
-
-        auto codes = findBarCodes(new_image);
-        display(new_image, codes);
+        auto codes = findBarCodes(scanner, image);
+        display(image, codes);
 
         if (cv::waitKey(5) > 0) {
             break;
