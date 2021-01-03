@@ -114,7 +114,7 @@ int main(int argc, char** argv)
 
         if (!lastScanned.empty()) {
             // Displays last barcode found
-            cv::putText(image, lastScanned, cv::Point(100, image.rows - 100), cv::FONT_HERSHEY_PLAIN, 20, cv::Scalar(0, 0, 255), 5);
+            cv::putText(image, lastScanned, cv::Point(100, image.rows - 100), cv::FONT_HERSHEY_TRIPLEX, 5, cv::Scalar(0, 0, 255), 5);
 
             cv::imshow("Main", image);
 
