@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -62,6 +63,13 @@ static int setScannerSettings(zbar::ImageScanner& scanner)
 
 int main(int argc, char** argv)
 {
+    std::string outputFilename("output.csv");
+    if (argc > 1) {
+        outputFilename = std::string(argv[1]);
+    }
+
+    std::ofstream outputFile(outputFilename, std::ios::app);
+
     zbar::ImageScanner scanner;
     if (setScannerSettings(scanner) != 0) {
         std::cerr << "Error setting ImageScanner config\n";
@@ -155,11 +163,14 @@ int main(int argc, char** argv)
             }
             Comic c { number, quality };
             lastScanned = "";
+
+            outputFile << c.number << ',' << c.qualityString() << '\n';
         }
 
         cv::imshow("Main", image);
 
         if (cv::waitKey(1) > 0) {
+            outputFile.close();
             break;
         }
     }
