@@ -169,7 +169,8 @@ int main(int argc, char** argv)
 
         cv::imshow("Main", image);
 
-        if (cv::waitKey(1) > 0) {
+        // Exits when pressing ESC
+        if (cv::waitKey(1) == 27) {
             outputFile.close();
             break;
         }
