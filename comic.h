@@ -1,4 +1,4 @@
-#include <jsoncons/json.hpp>
+#include <map>
 
 struct Comic {
     enum Quality {
@@ -27,6 +27,18 @@ struct Comic {
         , quality(quality)
     {
     }
-};
 
-JSONCONS_ALL_MEMBER_TRAITS(Comic, number, quality)
+    std::string qualityString() const
+    {
+        return std::map<Quality, std::string> { { NONE, "NONE" },
+            { MINT, "MINT" },
+            { NEAR_MINT, "NEAR MINT" },
+            { VERY_FINE, "VERY FINE" },
+            { FINE, "FINE" },
+            { VERY_GOOD, "},ERY GOOD" },
+            { GOOD, "GOOD" },
+            { FAIR, "FAIR" },
+            { POOR, "POOR" } }
+            .at(quality);
+    }
+};
