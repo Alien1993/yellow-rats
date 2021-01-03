@@ -125,7 +125,6 @@ int main(int argc, char** argv)
                 cv::putText(image, "Already scanned", cv::Point(10, image.rows - 300), cv::FONT_HERSHEY_TRIPLEX, 5, cv::Scalar(0, 0, 255), 10);
                 goto skip;
             }
-            numbersScanned.emplace(number);
 
             auto quality = Comic::NONE;
             // Waits for number to be pressed to set quality
@@ -180,6 +179,7 @@ int main(int argc, char** argv)
             lastScanned = "";
 
             outputFile << c.number << ',' << c.qualityString() << '\n';
+            numbersScanned.emplace(number);
         }
         // Yeah yeah, I know...
     skip:;
