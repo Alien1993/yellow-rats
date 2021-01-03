@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <set>
 #include <vector>
 
 #include <opencv2/opencv.hpp>
@@ -76,6 +77,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    // We keep track of scanned numbers to avoid scanning them again
+    std::set<unsigned int> numbersScanned;
+
     cv::namedWindow("Main");
     cv::VideoCapture cam;
 
@@ -116,6 +120,12 @@ int main(int argc, char** argv)
 
             // We're scanning EAN-5 but we don't need the first digit since only the last four are used to store the comic number
             unsigned int number = std::atoi(lastScanned.substr(1).data());
+
+            if (numbersScanned.find(number) != numbersScanned.cend()) {
+                cv::putText(image, "Already scanned", cv::Point(10, image.rows - 300), cv::FONT_HERSHEY_TRIPLEX, 5, cv::Scalar(0, 0, 255), 10);
+                goto skip;
+            }
+            numbersScanned.emplace(number);
 
             auto quality = Comic::NONE;
             // Waits for number to be pressed to set quality
@@ -160,6 +170,9 @@ int main(int argc, char** argv)
                 // 8 / Poor
                 quality = Comic::POOR;
                 break;
+            case 27:
+                // ESC, we skip this one
+                goto skip;
             default:
                 break;
             }
@@ -168,6 +181,8 @@ int main(int argc, char** argv)
 
             outputFile << c.number << ',' << c.qualityString() << '\n';
         }
+        // Yeah yeah, I know...
+    skip:;
 
         cv::imshow("Main", image);
 
