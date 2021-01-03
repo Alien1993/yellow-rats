@@ -35,7 +35,7 @@ struct Comic {
             { NEAR_MINT, "NEAR MINT" },
             { VERY_FINE, "VERY FINE" },
             { FINE, "FINE" },
-            { VERY_GOOD, "},ERY GOOD" },
+            { VERY_GOOD, "VERY GOOD" },
             { GOOD, "GOOD" },
             { FAIR, "FAIR" },
             { POOR, "POOR" } }
