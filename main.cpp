@@ -84,6 +84,8 @@ int main(int argc, char** argv)
     cv::Mat image;
     cv::Rect2d scanningArea;
     std::string lastScanned;
+    cam.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+    cam.set(cv::CAP_PROP_FPS, 30.0);
     while (cam.isOpened()) {
         cam.read(image);
 
